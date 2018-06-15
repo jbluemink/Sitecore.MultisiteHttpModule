@@ -4,6 +4,7 @@ using Sitecore.MultisiteHttpModule.Configuration;
 using Sitecore.Pipelines.HttpRequest;
 using System;
 using System.Configuration;
+using System.Runtime.Remoting.Contexts;
 using System.Web;
 using Sitecore.SecurityModel;
 
@@ -46,7 +47,7 @@ namespace Sitecore.MultisiteHttpModule.NotFound
                 return;
             }
 
-            if (ID.IsID(notFoundPageId) || notFoundPageId.StartsWith(Constants.ContentPath))
+            if (ID.IsID(notFoundPageId) || notFoundPageId.StartsWith(Settings.Constants.ContentPath))
             {
                 Context.Item = Context.Site.Database.GetItem(notFoundPageId);
             }
@@ -55,18 +56,20 @@ namespace Sitecore.MultisiteHttpModule.NotFound
         private bool IsValidUrlRequest(HttpContext context, HttpRequestArgs args)
         {
             return IsContextItemPopulated()
-                || ItemExistsButUserLacksPermissions(context)
+                || ItemExistsButUserLacksPermissions(context, args)
                 || IsSitecoreCmsClientRequest()
                 || IsValidAlias(args)
                 || ShouldUrlBeExcluded(context.Request.RawUrl)
                 || IsRequestForPhysicalFile(context);
         }
 
-        private static bool ItemExistsButUserLacksPermissions(HttpContext context)
+
+        private static bool ItemExistsButUserLacksPermissions(HttpContext context, HttpRequestArgs args)
         {
             if (Context.Site == null)
                 return false;
-
+            if (args.PermissionDenied == true)
+                return true;
             using (new SecurityDisabler())
             {
                 var itemPath = Context.Site.ContentStartPath + Context.Site.StartItem + GetRawUrlWithoutQueryString(context);
@@ -97,7 +100,7 @@ namespace Sitecore.MultisiteHttpModule.NotFound
 
         private static bool IsSitecoreCmsClientRequest()
         {
-            return Context.Site.Name == Constants.ShellSiteName;
+            return Context.Site.Name == Settings.Constants.ShellSiteName;
         }
 
         private static bool IsRequestForPhysicalFile(HttpContext context)

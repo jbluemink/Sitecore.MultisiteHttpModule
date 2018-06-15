@@ -12,6 +12,8 @@
             }
 
             public const string DefaultRobotsFile = "Robots.txt";
+            public const string ContentPath = "/sitecore/content";
+            public const string ShellSiteName = "shell";
         }
 
         public enum ExcludeRuleType
